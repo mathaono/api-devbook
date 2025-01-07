@@ -28,6 +28,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = user.Prepare("create"); err != nil {
+		responses.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
 	db, err := database.Connect()
 	if err != nil {
 		responses.Erro(w, http.StatusInternalServerError, err)
@@ -96,10 +101,70 @@ func SearchUserByID(w http.ResponseWriter, r *http.Request) {
 
 // Lida com a função HTTP (PUT) de ATUALIZAR um usuário e manda para o pacote repositories ATUALIZAR o usuário na tabela
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Atualizando usuário!"))
+	parameters := mux.Vars(r)
+	userID, err := strconv.ParseUint(parameters["ID"], 10, 64)
+	if err != nil {
+		responses.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	requestBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		responses.Erro(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	var user models.User
+	if err = json.Unmarshal(requestBody, &user); err != nil {
+		responses.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = user.Prepare("update"); err != nil {
+		responses.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	repository := repositories.NewUsersRepository(db)
+	err = repository.Update(userID, user)
+
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusNoContent, nil)
 }
 
 // Lida com a função HTTP (DELETE) de DELETAR um usuário e manda para o pacote repositories DELETAR o usuário na tabela
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Excluindo usuário!"))
+	parameters := mux.Vars(r)
+	userID, err := strconv.ParseUint(parameters["ID"], 10, 64)
+	if err != nil {
+		responses.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	repository := repositories.NewUsersRepository(db)
+	err = repository.Delete(userID)
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusNoContent, nil)
 }

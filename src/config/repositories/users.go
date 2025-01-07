@@ -44,7 +44,7 @@ func (repoUser users) Create(user models.User) (int64, error) {
 func (repoUser users) Search(userName string) ([]models.User, error) {
 	userName = "%" + userName + "%"
 
-	rows, err := repoUser.db.Query("SELECT name, nickname, email FROM users WHERE name ILIKE $1 OR nickname ILIKE $2", userName, userName)
+	rows, err := repoUser.db.Query("SELECT id, name, nickname, email FROM users WHERE name ILIKE $1 OR nickname ILIKE $2", userName, userName)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +55,7 @@ func (repoUser users) Search(userName string) ([]models.User, error) {
 	for rows.Next() {
 		var user models.User
 		if err = rows.Scan(
+			&user.ID,
 			&user.Name,
 			&user.Nickname,
 			&user.Email,
@@ -92,4 +93,38 @@ func (repoUser users) SearchByID(ID uint64) (models.User, error) {
 	}
 
 	return user, nil
+}
+
+// Atualiza as infos de um usuário no banco de dados
+func (repoUser users) Update(ID uint64, user models.User) error {
+	statement, err := repoUser.db.Prepare(
+		"UPDATE users SET name = $1, nickname = $2, email = $3 WHERE id = $4")
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	_, err = statement.Exec(user.Name, user.Nickname, user.Email, ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Exclui as infos de um usuário no banco de dados
+func (repoUser users) Delete(ID uint64) error {
+	statement, err := repoUser.db.Prepare("DELETE FROM users WHERE id = $1")
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
