@@ -39,3 +39,57 @@ func (repoUser users) Create(user models.User) (int64, error) {
 
 	return id, nil
 }
+
+// Trás todos os usuários da base de dados que atendem aos filtros
+func (repoUser users) Search(userName string) ([]models.User, error) {
+	userName = "%" + userName + "%"
+
+	rows, err := repoUser.db.Query("SELECT name, nickname, email FROM users WHERE name ILIKE $1 OR nickname ILIKE $2", userName, userName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+		if err = rows.Scan(
+			&user.Name,
+			&user.Nickname,
+			&user.Email,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+// Trás um usuário do banco pelo ID
+func (repoUser users) SearchByID(ID uint64) (models.User, error) {
+	rows, err := repoUser.db.Query("SELECT id, name, nickname, email, created_at FROM users WHERE id = $1", ID)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	defer rows.Close()
+
+	var user models.User
+
+	if rows.Next() {
+		if err = rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nickname,
+			&user.Email,
+			&user.CreatedAt,
+		); err != nil {
+			return models.User{}, err
+		}
+	}
+
+	return user, nil
+}
