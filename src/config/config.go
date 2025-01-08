@@ -12,8 +12,10 @@ import (
 var (
 	// String de conexão com o postgreSQL
 	// Porta que a API estará rodando
+	// SecretKey é a chave usada para assinar o token
 	ConnectStringDB = ""
 	Port            = 0
+	SecretKey       []byte
 )
 
 // Carrega as variáveis de ambiente
@@ -30,4 +32,6 @@ func Loading() {
 	}
 
 	ConnectStringDB = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
+
+	SecretKey = []byte(os.Getenv("SECRET_KEY"))
 }

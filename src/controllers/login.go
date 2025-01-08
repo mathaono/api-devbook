@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"api/security"
+	"api/src/authentication"
 	"api/src/config/repositories"
 	"api/src/database"
 	"api/src/models"
@@ -43,7 +44,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	err = security.PasswordValidate(userDB.Password, user.Password)
 	if err != nil {
 		responses.Erro(w, http.StatusUnauthorized, err)
+		return
 	}
 
-	w.Write([]byte("Login efetuado!"))
+	token, err := authentication.CreateToken(uint64(userDB.ID))
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Write([]byte(token))
 }
