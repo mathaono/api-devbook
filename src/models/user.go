@@ -1,6 +1,7 @@
 package models
 
 import (
+	"api/security"
 	"errors"
 	"strings"
 	"time"
@@ -20,11 +21,15 @@ type User struct {
 
 // Chama os métodos privados de validação e formatação de campos
 func (user *User) Prepare(step string) error {
-	if err := user.validate(step); err != nil {
+	err := user.validate(step)
+	if err != nil {
 		return err
 	}
 
-	user.format()
+	err = user.format(step)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -48,8 +53,19 @@ func (user *User) validate(step string) error {
 }
 
 // Formatação dos campos string
-func (user *User) format() {
+func (user *User) format(step string) error {
 	user.Name = strings.TrimSpace(user.Name)
 	user.Nickname = strings.TrimSpace(user.Nickname)
 	user.Email = strings.TrimSpace(user.Email)
+
+	if step == "create" {
+		passwordHash, err := security.Hash(user.Password)
+		if err != nil {
+			return err
+		}
+
+		user.Password = string(passwordHash)
+	}
+
+	return nil
 }

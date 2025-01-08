@@ -128,3 +128,22 @@ func (repoUser users) Delete(ID uint64) error {
 
 	return nil
 }
+
+// Busca um usuário no banco de dados pelo email e retorna ID e senha com Hash
+func (repoUser users) SearchByEmail(email string) (models.User, error) {
+	row, err := repoUser.db.Query("SELECT id, password FROM users WHERE email = $1", email)
+	if err != nil {
+		return models.User{}, err
+	}
+	defer row.Close()
+
+	var user models.User
+	if row.Next() {
+		err = row.Scan(&user.ID, &user.Password)
+		if err != nil {
+			return models.User{}, err
+		}
+	}
+
+	return user, nil
+}
