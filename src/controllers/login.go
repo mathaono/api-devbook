@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"api/security"
 	"api/src/authentication"
 	"api/src/config/repositories"
 	"api/src/database"
 	"api/src/models"
 	"api/src/responses"
+	"api/src/security"
 	"encoding/json"
 	"io"
 	"net/http"
