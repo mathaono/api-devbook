@@ -150,3 +150,65 @@ func (repoUser users) SearchByEmail(email string) (models.User, error) {
 
 	return user, nil
 }
+
+// Permite que um usuário siga outro
+func (repoUser users) Follow(userID, followerID uint64) error {
+	statement, err := repoUser.db.Prepare(`INSERT INTO followers (user_id, follow_id) VALUES ($1, $2) ON CONFLICT (user_id, follow_id) DO NOTHING`)
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	if _, err = statement.Exec(userID, followerID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Permite que um usuário deixe de seguir outro
+func (repoUser users) Unfollow(userID, followerID uint64) error {
+	statement, err := repoUser.db.Prepare(`DELETE FROM followers WHERE user_id = $1 AND follow_id = $2`)
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	if _, err = statement.Exec(userID, followerID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Permite buscar seguidores de um usuário no banco
+func (repoUser users) SearchFollowers(userID uint64) ([]models.User, error) {
+	rows, err := repoUser.db.Query(`SELECT u.id, u.name, u.nickname, u.email
+		FROM users u 
+		INNER JOIN followers s ON u.id = s.follow_id 
+		WHERE s.user_id = $1`, userID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		if err = rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nickname,
+			&user.Email,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}

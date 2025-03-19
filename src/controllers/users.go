@@ -204,3 +204,99 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	responses.JSON(w, http.StatusNoContent, nil)
 }
+
+// Permite que um usuário siga outro
+func FollowUser(w http.ResponseWriter, r *http.Request) {
+	followerID, err := authentication.ExtractUserID(r)
+	if err != nil {
+		log.Printf("[ERROR] - Unauthorized to following: %v", err)
+		responses.Erro(w, http.StatusUnauthorized, err)
+	}
+
+	parameters := mux.Vars(r)
+	userID, err := strconv.ParseUint(parameters["ID"], 10, 64)
+	if err != nil {
+		log.Printf("[ERROR] - userID is required: %v", err)
+		responses.Erro(w, http.StatusBadRequest, err)
+	}
+
+	if followerID == userID {
+		responses.Erro(w, http.StatusForbidden, errors.New("[ERROR] - followerID and userID are the same"))
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	repository := repositories.NewUsersRepository(db)
+	if err = repository.Follow(userID, followerID); err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusNoContent, nil)
+}
+
+// Permite deixar de seguir um usuário
+func UnfollowUser(w http.ResponseWriter, r *http.Request) {
+	followerID, err := authentication.ExtractUserID(r)
+	if err != nil {
+		log.Printf("[ERROR] - Unauthorized to unfollowing: %v", err)
+		responses.Erro(w, http.StatusUnauthorized, err)
+	}
+
+	parameters := mux.Vars(r)
+	userID, err := strconv.ParseUint(parameters["ID"], 10, 64)
+	if err != nil {
+		log.Printf("[ERROR] - userID is required: %v", err)
+		responses.Erro(w, http.StatusBadRequest, err)
+	}
+
+	if followerID == userID {
+		responses.Erro(w, http.StatusForbidden, errors.New("[ERROR] - followerID and userID are the same"))
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	repository := repositories.NewUsersRepository(db)
+	if err = repository.Unfollow(userID, followerID); err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusNoContent, nil)
+}
+
+// Permite fazer uma busca de seguidores de um usuário
+func SearchFollowers(w http.ResponseWriter, r *http.Request) {
+	parameters := mux.Vars(r)
+	userID, err := strconv.ParseUint(parameters["ID"], 10, 64)
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	repository := repositories.NewUsersRepository(db)
+	followers, err := repository.SearchFollowers(userID)
+	if err != nil {
+		responses.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusOK, followers)
+}
