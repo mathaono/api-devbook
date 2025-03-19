@@ -3,7 +3,7 @@ package repositories
 import (
 	"api/src/models"
 	"database/sql"
-	"fmt"
+	"log"
 )
 
 // Representa um repositório de usuários
@@ -21,7 +21,7 @@ func (repoUser users) Create(user models.User) (int64, error) {
 	statement, err := repoUser.db.Prepare(
 		"INSERT INTO users (name, nickname, email, password) VALUES ($1, $2, $3, $4);")
 	if err != nil {
-		fmt.Printf("Erro ao criar novo usuário na tabela: %s", err)
+		log.Printf("❌ [ERROR DB] - Failed to connect DB: %v", err)
 		return 0, err
 	}
 
@@ -29,6 +29,7 @@ func (repoUser users) Create(user models.User) (int64, error) {
 
 	result, err := statement.Exec(user.Name, user.Nickname, user.Email, user.Password)
 	if err != nil {
+		log.Printf("❌ [ERROR DB] - Failed to insert user on DB: %v", err)
 		return 0, nil
 	}
 
@@ -36,6 +37,8 @@ func (repoUser users) Create(user models.User) (int64, error) {
 	if err != nil {
 		return 0, nil
 	}
+
+	log.Printf("❌ [SUCCESS DB] - User inserted on DB: %d", id)
 
 	return id, nil
 }

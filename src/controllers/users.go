@@ -1,12 +1,16 @@
 package controllers
 
 import (
+	"api/src/authentication"
 	"api/src/config/repositories"
 	"api/src/database"
 	"api/src/models"
 	"api/src/responses"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,11 +28,15 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
 	if err = json.Unmarshal(requestBody, &user); err != nil {
+		log.Printf("[ERROR] - Failed Unmarshal JSON: %v", err)
 		responses.Erro(w, http.StatusBadRequest, err)
 		return
 	}
 
+	log.Printf("[RECEIVED] - Creating user: %v", user)
+
 	if err = user.Prepare("create"); err != nil {
+		log.Printf("[ERROR] - Failed to prepare user: %v", err)
 		responses.Erro(w, http.StatusBadRequest, err)
 		return
 	}
@@ -43,10 +51,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	repository := repositories.NewUsersRepository(db)
 	userId, err := repository.Create(user)
 	if err != nil {
+		log.Printf("[ERROR] - Failed to create user: %v", err)
 		responses.Erro(w, http.StatusInternalServerError, err)
 	}
 
 	user.ID = int(userId)
+
+	log.Printf("[SUCCESS] - User created: %v", user)
 
 	responses.JSON(w, http.StatusCreated, user)
 }
@@ -108,6 +119,19 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userTokenID, err := authentication.ExtractUserID(r)
+	if err != nil {
+		responses.Erro(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	fmt.Println("user ID Token: ", userTokenID)
+	if userID != userTokenID {
+		log.Println("[ERROR] - UserID and token are different")
+		responses.Erro(w, http.StatusForbidden, errors.New("UserID and token are different"))
+		return
+	}
+
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		responses.Erro(w, http.StatusUnprocessableEntity, err)
@@ -149,6 +173,18 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.ParseUint(parameters["ID"], 10, 64)
 	if err != nil {
 		responses.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	userTokenID, err := authentication.ExtractUserID(r)
+	if err != nil {
+		responses.Erro(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if userID != userTokenID {
+		log.Println("[ERROR] - UserID and token are different")
+		responses.Erro(w, http.StatusForbidden, errors.New("UserID and token are different"))
 		return
 	}
 

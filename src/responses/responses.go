@@ -13,9 +13,12 @@ func JSON(w http.ResponseWriter, statusCode int, data interface{}) {
 
 	if data != nil {
 		if err := json.NewEncoder(w).Encode(data); err != nil {
+			log.Printf("❌ [ERROR] - Failed to convert response: %v", err)
 			log.Fatal(err)
 		}
 	}
+
+	log.Printf("Status: %d - Info: %+v", statusCode, data)
 }
 
 // Retorna uma struct de erro no formato JSON

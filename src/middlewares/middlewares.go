@@ -5,6 +5,7 @@ import (
 	"api/src/responses"
 	"log"
 	"net/http"
+	"time"
 )
 
 // Escreve no terminal as informações da request
@@ -26,4 +27,13 @@ func Autenticate(next http.HandlerFunc) http.HandlerFunc {
 
 		next(w, r)
 	}
+}
+
+func LogRequestMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		log.Printf("[REQUEST] - METHOD: %s - PATH: %s - IP: %s", r.Method, r.URL.Path, r.RemoteAddr)
+		next.ServeHTTP(w, r)
+		log.Printf("[COMPLETED] - METHOD: %s - PATH: %s - Time: %s", r.Method, r.URL.Path, time.Since(start))
+	})
 }

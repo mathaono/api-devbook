@@ -22,18 +22,18 @@ var userRoutes = []Rota{
 		URI:            "/users/{ID}",
 		Method:         http.MethodGet,
 		Func:           controllers.SearchUserByID,
-		Authentication: false,
+		Authentication: true,
 	},
 	{
 		URI:            "/users/{ID}",
 		Method:         http.MethodPut,
 		Func:           controllers.UpdateUser,
-		Authentication: false,
+		Authentication: true,
 	},
 	{
 		URI:            "/users/{ID}",
 		Method:         http.MethodDelete,
 		Func:           controllers.DeleteUser,
-		Authentication: false,
+		Authentication: true,
 	},
 }
