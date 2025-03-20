@@ -187,8 +187,8 @@ func (repoUser users) Unfollow(userID, followerID uint64) error {
 func (repoUser users) SearchFollowers(userID uint64) ([]models.User, error) {
 	rows, err := repoUser.db.Query(`SELECT u.id, u.name, u.nickname, u.email
 		FROM users u 
-		INNER JOIN followers s ON u.id = s.follow_id 
-		WHERE s.user_id = $1`, userID)
+		INNER JOIN followers f ON u.id = f.follow_id 
+		WHERE f.user_id = $1`, userID)
 
 	if err != nil {
 		return nil, err
@@ -211,4 +211,67 @@ func (repoUser users) SearchFollowers(userID uint64) ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+// Permite buscar os usuários que o usuário da request está seguindo
+func (repoUser users) SearchFollowing(userID uint64) ([]models.User, error) {
+	rows, err := repoUser.db.Query(`SELECT u.id, u.name, u.nickname, u.email
+		FROM users u INNER JOIN followers f ON u.id = f.user_id
+		WHERE f.follow_id = $1`, userID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+		if err = rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nickname,
+			&user.Email,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func (repoUser users) SearchPass(userID uint64) (string, error) {
+	row, err := repoUser.db.Query(`SELECT password from users WHERE id = $1`, userID)
+	if err != nil {
+		return "", err
+	}
+	defer row.Close()
+
+	var user models.User
+	if row.Next() {
+		if err = row.Scan(&user.Password); err != nil {
+			return "", err
+		}
+	}
+
+	return user.Password, nil
+}
+
+// Altera a senha do usuário da request
+func (repoUser users) UpdatePass(userID uint64, pass string) error {
+	statement, err := repoUser.db.Prepare(`UPDATE users SET password = $1 WHERE id = $2`)
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	if _, err = statement.Exec(pass, userID); err != nil {
+		return err
+	}
+
+	return nil
 }

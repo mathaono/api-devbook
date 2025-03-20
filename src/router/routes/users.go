@@ -54,4 +54,16 @@ var userRoutes = []Rota{
 		Func:           controllers.SearchFollowers,
 		Authentication: true,
 	},
+	{
+		URI:            "/users/{ID}/following",
+		Method:         http.MethodGet,
+		Func:           controllers.SearchFollowing,
+		Authentication: true,
+	},
+	{
+		URI:            "/users/{ID}/resetPass",
+		Method:         http.MethodPost,
+		Func:           controllers.ResetPass,
+		Authentication: true,
+	},
 }
