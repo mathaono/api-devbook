@@ -38,7 +38,7 @@ func (repoUser users) Create(user models.User) (int64, error) {
 		return 0, nil
 	}
 
-	log.Printf("❌ [SUCCESS DB] - User inserted on DB: %d", id)
+	log.Printf("[SUCCESS DB] - User inserted on DB: %d", id)
 
 	return id, nil
 }

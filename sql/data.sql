@@ -16,3 +16,10 @@ INSERT INTO followers(user_id, follow_id) VALUES
 (4, 3),
 (5, 4),
 (5, 1);
+
+INSERT INTO publications(title, content, user_id) VALUES
+('Publicação usuário 1', 'Conteúdo de publicação do usuário 1', 1),
+('Publicação usuário 2', 'Conteúdo de publicação do usuário 2', 2),
+('Publicação usuário 3', 'Conteúdo de publicação do usuário 3', 3),
+('Publicação usuário 4', 'Conteúdo de publicação do usuário 4', 4),
+('Publicação usuário 5', 'Conteúdo de publicação do usuário 5', 5);
