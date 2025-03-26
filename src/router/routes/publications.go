@@ -36,4 +36,22 @@ var routesPublications = []Rota{
 		Func:           controllers.DeletePublication,
 		Authentication: true,
 	},
+	{
+		URI:            "/users/{userID}/publications",
+		Method:         http.MethodGet,
+		Func:           controllers.SearchPublicationByUser,
+		Authentication: true,
+	},
+	{
+		URI:            "/publications/{publicationID}/like",
+		Method:         http.MethodPost,
+		Func:           controllers.LikePublication,
+		Authentication: true,
+	},
+	{
+		URI:            "/publications/{publicationID}/dislike",
+		Method:         http.MethodPost,
+		Func:           controllers.DislikePublication,
+		Authentication: true,
+	},
 }
